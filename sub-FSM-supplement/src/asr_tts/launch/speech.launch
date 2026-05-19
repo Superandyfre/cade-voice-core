@@ -1,0 +1,61 @@
+<launch>
+    <!-- Audio device parameters -->
+    <arg name="mic_id" default="default" />
+    <arg name="speaker_id" default="default" />
+    <arg name="voice_source_assoc" default="false" />
+    <arg name="voice_source_log_dir" default="$(find asr_tts)/voice_source_logs" />
+
+    <!-- ASR node type selection: only one ASR node is launched at a time -->
+    <!-- Valid values:
+         asr_node              - VAD + offline ASR (default, SenseVoice/Whisper/Paraformer)
+         streaming_endpoint    - Streaming ASR with endpoint detection (Zipformer Transducer)
+         vad_streaming         - VAD + streaming ASR (Zipformer, no speaker ID)
+         dynamic_vad           - VAD + offline ASR + dynamic speaker registration
+         dynamic_vad_streaming - VAD + streaming ASR + dynamic speaker registration
+    -->
+    <arg name="asr_type" default="asr_node" doc="ASR node type to launch" />
+
+    <!-- TTS node (always launched) -->
+    <node pkg="asr_tts" type="tts_node.py" name="tts_node" output="screen">
+        <param name="device_name" value="$(arg speaker_id)" />
+        <param name="play" value="true" />
+    </node>
+
+    <!-- ASR node (selected by asr_type) -->
+    <group if="$(eval arg('asr_type') == 'asr_node')">
+        <node pkg="asr_tts" type="asr_node.py" name="asr_node" output="screen">
+            <param name="device_name" value="$(arg mic_id)" />
+        </node>
+    </group>
+
+    <group if="$(eval arg('asr_type') == 'streaming_endpoint')">
+        <node pkg="asr_tts" type="streaming_asr_endpoint_node.py" name="streaming_asr_endpoint_node" output="screen">
+            <param name="device_name" value="$(arg mic_id)" />
+        </node>
+    </group>
+
+    <group if="$(eval arg('asr_type') == 'vad_streaming')">
+        <node pkg="asr_tts" type="vad_streaming_asr_node.py" name="vad_streaming_asr_node" output="screen">
+            <param name="device_name" value="$(arg mic_id)" />
+        </node>
+    </group>
+
+    <group if="$(eval arg('asr_type') == 'dynamic_vad')">
+        <node pkg="asr_tts" type="dynamic_vad_asr_node.py" name="dynamic_vad_asr_node" output="screen">
+            <param name="device_name" value="$(arg mic_id)" />
+        </node>
+    </group>
+
+    <group if="$(eval arg('asr_type') == 'dynamic_vad_streaming')">
+        <node pkg="asr_tts" type="dynamic_vad_streaming_asr_node.py" name="dynamic_vad_streaming_asr_node" output="screen">
+            <param name="device_name" value="$(arg mic_id)" />
+        </node>
+    </group>
+
+    <!-- Optional association node: /asr_event + /sound_source_doa -> /voice_with_source -->
+    <group if="$(arg voice_source_assoc)">
+        <node pkg="asr_tts" type="voice_source_associator.py" name="voice_source_associator" output="screen">
+            <param name="log_dir" value="$(arg voice_source_log_dir)" />
+        </node>
+    </group>
+</launch>

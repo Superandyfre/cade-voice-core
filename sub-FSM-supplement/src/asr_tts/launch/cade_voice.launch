@@ -1,0 +1,43 @@
+<launch>
+    <!-- CADE robot launch file with preset device names -->
+    <arg name="mic_id" default="CADE_Mic" />
+    <arg name="speaker_id" default="CADE_Speaker" />
+
+    <!-- Default ASR node is asr_node; can be switched via argument -->
+    <arg name="asr_type" default="asr_node" />
+
+    <node pkg="asr_tts" type="tts_node.py" name="tts_node" output="screen">
+        <param name="device_name" value="$(arg speaker_id)" />
+        <param name="play" value="true" />
+    </node>
+
+    <group if="$(eval arg('asr_type') == 'asr_node')">
+        <node pkg="asr_tts" type="asr_node.py" name="asr_node" output="screen">
+            <param name="device_name" value="$(arg mic_id)" />
+        </node>
+    </group>
+
+    <group if="$(eval arg('asr_type') == 'streaming_endpoint')">
+        <node pkg="asr_tts" type="streaming_asr_endpoint_node.py" name="streaming_asr_endpoint_node" output="screen">
+            <param name="device_name" value="$(arg mic_id)" />
+        </node>
+    </group>
+
+    <group if="$(eval arg('asr_type') == 'vad_streaming')">
+        <node pkg="asr_tts" type="vad_streaming_asr_node.py" name="vad_streaming_asr_node" output="screen">
+            <param name="device_name" value="$(arg mic_id)" />
+        </node>
+    </group>
+
+    <group if="$(eval arg('asr_type') == 'dynamic_vad')">
+        <node pkg="asr_tts" type="dynamic_vad_asr_node.py" name="dynamic_vad_asr_node" output="screen">
+            <param name="device_name" value="$(arg mic_id)" />
+        </node>
+    </group>
+
+    <group if="$(eval arg('asr_type') == 'dynamic_vad_streaming')">
+        <node pkg="asr_tts" type="dynamic_vad_streaming_asr_node.py" name="dynamic_vad_streaming_asr_node" output="screen">
+            <param name="device_name" value="$(arg mic_id)" />
+        </node>
+    </group>
+</launch>
