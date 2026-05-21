@@ -40,6 +40,9 @@ def select_device(devices, target_name: str, direction: str) -> Optional[int]:
     target_lower = target.lower()
     preferred = []
     if target_lower == "default":
+        idx = _sounddevice_default_index(devices, direction)
+        if idx is not None and has_channels(devices[idx]):
+            return idx
         preferred = ["default", "pulse"]
     elif target_lower in ("pulse", "pulseaudio"):
         preferred = ["pulse", "default"]
@@ -58,6 +61,28 @@ def select_device(devices, target_name: str, direction: str) -> Optional[int]:
         if idx is not None:
             return idx
 
+    return None
+
+
+def _sounddevice_default_index(devices, direction) -> Optional[int]:
+    try:
+        import sounddevice as sd
+    except ImportError:
+        return None
+
+    default_device = getattr(sd.default, "device", None)
+    if default_device is None:
+        return None
+    try:
+        idx = default_device[0] if direction == "input" else default_device[1]
+    except (TypeError, IndexError):
+        idx = default_device
+    try:
+        idx = int(idx)
+    except (TypeError, ValueError):
+        return None
+    if 0 <= idx < len(devices):
+        return idx
     return None
 
 

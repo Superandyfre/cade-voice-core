@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cade-voice-core"
-version = "0.1.0"
+version = "0.2.0"
 description = "CADE voice interaction core — standalone ASR/TTS/LLM module (ROS-free)"
 requires-python = ">=3.10"
 dependencies = [
@@ -16,13 +16,31 @@ dependencies = [
     "sherpa-onnx>=1.10.0",
     "sounddevice>=0.4.6",
     "soundfile>=0.12.1",
+    "pyzmq>=25.0.0",
+    "psutil>=5.9.0",
+    "PyYAML>=6.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
+    "pytest-cov>=4.0",
     "loguru>=0.7.0",
 ]
 
+[project.scripts]
+cade-text-chat = "cade.cli:main_text_chat"
+cade-voice-chat = "cade.cli:main_voice_chat"
+cade-bench = "cade.cli:main_bench"
+cade-order-fsm = "cade.fsm.cli:main_order_fsm"
+cade-order-voice = "cade.fsm.cli:main_order_voice"
+cade-order-test = "cade.fsm.full_pipeline_test:main"
+cade-order-e2e = "cade.fsm.full_pipeline_standalone:main"
+cade-order-doctor = "cade.fsm.cli:main_order_doctor"
+cade-fsm-graph = "cade.fsm.graph_export:main"
+
 [tool.setuptools.packages.find]
 include = ["cade*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

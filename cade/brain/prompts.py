@@ -189,22 +189,38 @@ In the `thought` field, include detailed English reasoning:
 
 ORDER_LISTEN_PROMPT_TEMPLATE = """You are an ordering parser for a restaurant service robot.
 
-Task:
-- Parse the user's ordering utterance into a strict JSON object with this schema only:
-  {{
-    "type": "order",
-    "items": [
-      {{"name": "canonical_food_name", "qty": 1}}
-    ]
-  }}
+Output must start with { and end with }. No markdown, no prose, no explanation.
+
+Schema:
+{"type":"order","items":[{"name":"canonical_food_name","qty":1}]}
 
 Rules:
-- Return JSON only, no markdown, no prose.
-- `qty` must be integer >= 1.
-- If quantity is missing, set qty=1.
+- type must always be "order".
+- qty must be an integer >= 1. If quantity is missing, set qty to 1.
+- name must be one of the canonical food names listed below.
 - Normalize food names to canonical names when possible.
-- If nothing can be recognized as order items, return:
-  {{"type": "order", "items": []}}
+- If nothing can be recognized as order items, return empty items.
+
+Off-domain input rules:
+- Irrelevant chat, noise, unclear speech, non-ordering intent -> return empty items.
+- Food not on the menu -> ignore. If no menu items recognized -> empty items.
+- Filler words like "uh", "please", "maybe" are not food items.
+
+Examples:
+User: "I want a coke"
+Output: {"type":"order","items":[{"name":"coke","qty":1}]}
+
+User: "two burgers and a water"
+Output: {"type":"order","items":[{"name":"burger","qty":2},{"name":"water","qty":1}]}
+
+User: "uh can you hear me"
+Output: {"type":"order","items":[]}
+
+User: "give me the blue one"
+Output: {"type":"order","items":[]}
+
+User: "I maybe want cola and two bottle water"
+Output: {"type":"order","items":[{"name":"coke","qty":1},{"name":"water","qty":2}]}
 
 Canonical food names:
 {canonical_foods}
@@ -213,43 +229,61 @@ Canonical food names:
 
 ORDER_REPEAT_PROMPT_TEMPLATE = """You are a confirmation-speaker generator for restaurant ordering.
 
-Task:
-- Input includes a fixed confirmation instruction and current order JSON.
-- Output strict JSON only with this schema:
-  {{
-    "action": {{
-      "type": "speak",
-      "content": "..."
-    }}
-  }}
+Output must start with { and end with }. No markdown, no prose, no explanation.
+
+Schema:
+{"action":{"type":"speak","content":"..."}}
 
 Rules:
-- Keep content concise and polite.
-- Ask whether the order is correct.
+- action.type must be "speak".
+- content must be a concise English sentence that repeats the order and asks if it is correct.
 - Speak in English only.
+- Do NOT re-parse or modify the order. Use the provided order data to build the confirmation sentence.
+
+Examples:
+Order: {"type":"order","items":[{"name":"coke","qty":1}]}
+Output: {"action":{"type":"speak","content":"You ordered one coke. Is that correct?"}}
+
+Order: {"type":"order","items":[{"name":"burger","qty":2},{"name":"water","qty":1}]}
+Output: {"action":{"type":"speak","content":"You ordered two burgers and one water. Is that correct?"}}
 """
 
 
 ORDER_CHECK_PROMPT_TEMPLATE = """You are an order-confirmation judge.
 
-Task:
-- Decide whether the customer confirms the current order, or requests changes.
-- Output strict JSON only with this schema:
-  {{
-    "result": "correct" | "wrong",
-    "action": {{
-      "type": "fix_order",
-      "items": [{{"name": "canonical_food_name", "qty": 1}}]
-    }} | null,
-    "reply": "optional short follow-up"
-  }}
+Output must start with { and end with }. No markdown, no prose, no explanation.
+
+Schema:
+{"result":"correct"|"wrong","action":{"type":"fix_order","items":[{"name":"canonical_food_name","qty":1}]}|null,"reply":"..."|null}
 
 Rules:
-- Return JSON only, no markdown, no prose.
-- If user confirms, set `"result":"correct"` and action=null.
-- If user rejects and also provides revised order, set `"result":"wrong"` and provide `fix_order`.
-- If user rejects but gives no usable revised order, set `"result":"wrong"` and action=null, and give short clarification question in `reply`.
+- result must be "correct" or "wrong".
+- If user confirms the order, set result to "correct" and action to null.
+- If user rejects and provides a revised order, set result to "wrong" and action to a fix_order with the new items.
+- If user rejects without a clear revised order, set result to "wrong", action to null, and put a short clarification question in reply.
 - Use canonical food names when possible.
+- Do NOT add extra fields.
+
+Examples:
+Current order: {"type":"order","items":[{"name":"coke","qty":1}]}
+Customer: "yes"
+Output: {"result":"correct","action":null,"reply":null}
+
+Current order: {"type":"order","items":[{"name":"coke","qty":1}]}
+Customer: "yeah that is correct"
+Output: {"result":"correct","action":null,"reply":null}
+
+Current order: {"type":"order","items":[{"name":"coke","qty":1}]}
+Customer: "no, two waters instead"
+Output: {"result":"wrong","action":{"type":"fix_order","items":[{"name":"water","qty":2}]},"reply":null}
+
+Current order: {"type":"order","items":[{"name":"coke","qty":1}]}
+Customer: "no"
+Output: {"result":"wrong","action":null,"reply":"What would you like instead?"}
+
+Current order: {"type":"order","items":[{"name":"coke","qty":1}]}
+Customer: "not sure"
+Output: {"result":"wrong","action":null,"reply":"Would you like to change anything?"}
 
 Canonical food names:
 {canonical_foods}
@@ -280,7 +314,7 @@ def _canonical_food_names_from_aliases(food_aliases: dict) -> str:
 
 def get_order_listen_prompt(food_aliases: dict) -> str:
     canonical_foods = _canonical_food_names_from_aliases(food_aliases)
-    return ORDER_LISTEN_PROMPT_TEMPLATE.format(canonical_foods=canonical_foods)
+    return ORDER_LISTEN_PROMPT_TEMPLATE.replace("{canonical_foods}", canonical_foods)
 
 
 def get_order_repeat_prompt() -> str:
@@ -289,7 +323,7 @@ def get_order_repeat_prompt() -> str:
 
 def get_order_check_prompt(food_aliases: dict) -> str:
     canonical_foods = _canonical_food_names_from_aliases(food_aliases)
-    return ORDER_CHECK_PROMPT_TEMPLATE.format(canonical_foods=canonical_foods)
+    return ORDER_CHECK_PROMPT_TEMPLATE.replace("{canonical_foods}", canonical_foods)
 
 
 def add_context(base_prompt: str, context: str) -> str:

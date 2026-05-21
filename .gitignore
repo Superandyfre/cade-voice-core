@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Models (large files, not tracked)
+models/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data (runtime generated)
+data/orders/
+
+# Diagnostics output
+diagnostics/
+
+# Local env overrides
+.env
+
+# Test cache
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+fsm/cade-voice-core/
+fsm/

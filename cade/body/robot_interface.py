@@ -27,10 +27,6 @@ class RobotInterface(ABC):
         self.holding_object: Optional[str] = None
 
     @abstractmethod
-    def navigate(self, target) -> bool:
-        pass
-
-    @abstractmethod
     def search(self, object_name: str) -> Optional[dict]:
         pass
 

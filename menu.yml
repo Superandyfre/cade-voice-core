@@ -1,0 +1,70 @@
+items:
+  - id: water
+    name: water
+    aliases: [water, bottle of water]
+    category: drink
+    available: true
+    max_qty: 10
+    price: 1.50
+  - id: coke
+    name: coke
+    aliases: [coke, cola, coca cola]
+    category: drink
+    available: true
+    max_qty: 10
+    price: 2.50
+    modifiers:
+      size: [small, medium, large]
+      ice: [no ice, less ice, regular ice]
+  - id: juice
+    name: juice
+    aliases: [juice, orange juice, apple juice]
+    category: drink
+    available: true
+    max_qty: 10
+    price: 3.00
+    modifiers:
+      size: [small, medium, large]
+  - id: coffee
+    name: coffee
+    aliases: [coffee, latte, americano, cappuccino]
+    category: drink
+    available: true
+    max_qty: 10
+    price: 3.50
+    modifiers:
+      size: [small, medium, large]
+  - id: tea
+    name: tea
+    aliases: [tea, black tea, green tea, milk tea]
+    category: drink
+    available: true
+    max_qty: 10
+    price: 2.50
+    modifiers:
+      size: [small, medium, large]
+  - id: burger
+    name: burger
+    aliases: [burger, hamburger, cheeseburger]
+    category: food
+    available: true
+    max_qty: 10
+    price: 5.00
+    modifiers:
+      size: [single, double]
+  - id: fries
+    name: fries
+    aliases: [fries, french fries, chips]
+    category: food
+    available: true
+    max_qty: 10
+    price: 3.00
+    modifiers:
+      size: [small, medium, large]
+  - id: fried_rice
+    name: fried rice
+    aliases: [fried rice]
+    category: food
+    available: true
+    max_qty: 10
+    price: 4.50

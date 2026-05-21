@@ -1,0 +1,10 @@
+{"id": "general_action_001", "task": "general_action", "input": "find the apple", "expected": {"action": {"type": "search", "object_name": "apple"}}, "tags": ["search"]}
+{"id": "general_action_002", "task": "general_action", "input": "bring me the cup", "expected": {"action": {"type": "search", "object_name": "cup"}}, "tags": ["search", "multi_step"]}
+{"id": "general_action_003", "task": "general_action", "input": "pick up the bottle", "expected": {"action": {"type": "pick", "object_name": "bottle"}}, "tags": ["pick"]}
+{"id": "general_action_004", "task": "general_action", "input": "put it on the table", "expected": {"action": {"type": "place", "location": "table"}}, "tags": ["place"]}
+{"id": "general_action_005", "task": "general_action", "input": "hello", "expected": {"action": {"type": "wait"}}, "tags": ["smalltalk"]}
+{"id": "general_action_006", "task": "general_action", "input": "what is your name", "expected": {"action": {"type": "wait"}}, "tags": ["smalltalk"]}
+{"id": "general_action_007", "task": "general_action", "input": "search for the book", "expected": {"action": {"type": "search", "object_name": "book"}}, "tags": ["search"]}
+{"id": "general_action_008", "task": "general_action", "input": "can you go to the kitchen", "expected": {"action": {"type": "place"}}, "tags": ["navigation"]}
+{"id": "general_action_009", "task": "general_action", "input": "say hello to everyone", "expected": {"action": {"type": "speak"}}, "tags": ["speak"]}
+{"id": "general_action_010", "task": "general_action", "input": "wait here", "expected": {"action": {"type": "wait"}}, "tags": ["wait"]}

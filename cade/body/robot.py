@@ -47,31 +47,6 @@ class Robot(RobotInterface):
         logger.info(f"   Known locations: {list(self.known_locations.keys())}")
         logger.info(f"   Known objects: {list(self.known_objects.keys())}")
 
-    def navigate(self, target) -> bool:
-        self.set_state(RobotState.EXECUTING)
-        logger.info(f"[NAVIGATE] From {self.current_position} to {target}")
-        time.sleep(0.5)
-
-        if isinstance(target, str):
-            if target in self.known_locations:
-                self.current_position = target
-                coords = self.known_locations[target]
-                logger.info(f"Arrived at {target} (coordinates: {coords})")
-                self.set_state(RobotState.IDLE)
-                return True
-            logger.info(f"Unknown location: {target}")
-            self.set_state(RobotState.ERROR)
-            return False
-
-        if isinstance(target, list) and len(target) == 3:
-            self.current_position = f"coordinates{target}"
-            logger.info(f"Arrived at coordinates {target}")
-            self.set_state(RobotState.IDLE)
-            return True
-
-        logger.info(f"Invalid target format: {target}")
-        self.set_state(RobotState.ERROR)
-        return False
 
     def search(self, object_name: str) -> Optional[dict]:
         self.set_state(RobotState.EXECUTING)

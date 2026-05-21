@@ -1,0 +1,15 @@
+{"id": "order_listen_001", "task": "order_listen", "input": "I want a coke", "expected": {"type": "order", "items": [{"name": "coke", "qty": 1}]}, "tags": ["simple", "quantity"]}
+{"id": "order_listen_002", "task": "order_listen", "input": "two burgers and a water", "expected": {"type": "order", "items": [{"name": "burger", "qty": 2}, {"name": "water", "qty": 1}]}, "tags": ["simple", "quantity", "multi_item"]}
+{"id": "order_listen_003", "task": "order_listen", "input": "uh can you hear me", "expected": {"type": "order", "items": []}, "tags": ["off_domain"]}
+{"id": "order_listen_004", "task": "order_listen", "input": "I maybe want cola and two bottle water", "expected": {"type": "order", "items": [{"name": "coke", "qty": 1}, {"name": "water", "qty": 2}]}, "tags": ["alias", "quantity"]}
+{"id": "order_listen_005", "task": "order_listen", "input": "give me the blue one", "expected": {"type": "order", "items": []}, "tags": ["off_domain"]}
+{"id": "order_listen_006", "task": "order_listen", "input": "no, actually two waters", "expected": {"type": "order", "items": [{"name": "water", "qty": 2}]}, "tags": ["quantity"]}
+{"id": "order_listen_007", "task": "order_listen", "input": "hello what is your name", "expected": {"type": "order", "items": []}, "tags": ["off_domain"]}
+{"id": "order_listen_008", "task": "order_listen", "input": "one coke please", "expected": {"type": "order", "items": [{"name": "coke", "qty": 1}]}, "tags": ["simple", "quantity"]}
+{"id": "order_listen_009", "task": "order_listen", "input": "three fries and two cokes", "expected": {"type": "order", "items": [{"name": "fries", "qty": 3}, {"name": "coke", "qty": 2}]}, "tags": ["simple", "quantity", "multi_item"]}
+{"id": "order_listen_010", "task": "order_listen", "input": "can I have chips", "expected": {"type": "order", "items": [{"name": "fries", "qty": 1}]}, "tags": ["alias"]}
+{"id": "order_listen_011", "task": "order_listen", "input": "a burger and a coffee", "expected": {"type": "order", "items": [{"name": "burger", "qty": 1}, {"name": "coffee", "qty": 1}]}, "tags": ["simple", "multi_item"]}
+{"id": "order_listen_012", "task": "order_listen", "input": "five waters", "expected": {"type": "order", "items": [{"name": "water", "qty": 5}]}, "tags": ["quantity"]}
+{"id": "order_listen_013", "task": "order_listen", "input": "cola cola cola", "expected": {"type": "order", "items": [{"name": "coke", "qty": 1}]}, "tags": ["alias", "noise"]}
+{"id": "order_listen_014", "task": "order_listen", "input": "", "expected": {"type": "order", "items": []}, "tags": ["empty"]}
+{"id": "order_listen_015", "task": "order_listen", "input": "I'd like fried rice and a tea", "expected": {"type": "order", "items": [{"name": "fried_rice", "qty": 1}, {"name": "tea", "qty": 1}]}, "tags": ["simple", "multi_item"]}

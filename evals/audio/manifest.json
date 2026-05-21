@@ -1,0 +1,127 @@
+[
+  {
+    "id": "listen_simple_single",
+    "input_text": "I want a coke",
+    "fsm_state": "LISTEN",
+    "expected": {
+      "event_type": "valid_order",
+      "items": [{"name": "coke", "qty": 1}]
+    },
+    "tags": ["listen", "single_item"]
+  },
+  {
+    "id": "listen_multi_item",
+    "input_text": "two cokes and a water",
+    "fsm_state": "LISTEN",
+    "expected": {
+      "event_type": "valid_order",
+      "parse_source": "rule",
+      "items": [{"name": "coke", "qty": 2}, {"name": "water", "qty": 1}]
+    },
+    "tags": ["listen", "multi_item"]
+  },
+  {
+    "id": "listen_cancel",
+    "input_text": "cancel",
+    "fsm_state": "LISTEN",
+    "expected": {
+      "event_type": "cancel_request"
+    },
+    "tags": ["listen", "cancel"]
+  },
+  {
+    "id": "listen_menu_question",
+    "input_text": "what do you have",
+    "fsm_state": "LISTEN",
+    "expected": {
+      "event_type": "menu_question"
+    },
+    "tags": ["listen", "menu_question"]
+  },
+  {
+    "id": "listen_smalltalk",
+    "input_text": "hello",
+    "fsm_state": "LISTEN",
+    "expected": {
+      "event_type": "smalltalk"
+    },
+    "tags": ["listen", "smalltalk"]
+  },
+  {
+    "id": "listen_empty",
+    "input_text": "",
+    "fsm_state": "LISTEN",
+    "expected": {
+      "event_type": "empty_or_noise"
+    },
+    "tags": ["listen", "empty"]
+  },
+  {
+    "id": "listen_out_of_menu",
+    "input_text": "I want a pizza",
+    "fsm_state": "LISTEN",
+    "expected": {
+      "event_type": "out_of_menu_item",
+      "out_of_menu_item": "pizza"
+    },
+    "tags": ["listen", "out_of_menu"]
+  },
+  {
+    "id": "listen_alias",
+    "input_text": "give me a cola",
+    "fsm_state": "LISTEN",
+    "expected": {
+      "event_type": "valid_order",
+      "items": [{"name": "cola", "qty": 1}]
+    },
+    "tags": ["listen", "alias"]
+  },
+  {
+    "id": "check_yes",
+    "input_text": "yes",
+    "fsm_state": "CHECK",
+    "expected": {
+      "event_type": "confirm_correct",
+      "confirm_result": "correct"
+    },
+    "tags": ["check", "confirm_correct"]
+  },
+  {
+    "id": "check_cancel",
+    "input_text": "cancel",
+    "fsm_state": "CHECK",
+    "expected": {
+      "event_type": "cancel_request"
+    },
+    "tags": ["check", "cancel"]
+  },
+  {
+    "id": "check_yes_but_add",
+    "input_text": "yes but add a coke",
+    "fsm_state": "CHECK",
+    "expected": {
+      "event_type": "confirm_wrong",
+      "confirm_result": "wrong",
+      "has_fix_order": true
+    },
+    "tags": ["check", "modified"]
+  },
+  {
+    "id": "check_repeat",
+    "input_text": "repeat that",
+    "fsm_state": "CHECK",
+    "expected": {
+      "event_type": "repeat_request"
+    },
+    "tags": ["check", "repeat"]
+  },
+  {
+    "id": "check_noise",
+    "input_text": "uh",
+    "fsm_state": "CHECK",
+    "expected": {
+      "event_type": "empty_or_noise"
+    },
+    "tags": ["check", "noise"]
+  }
+]

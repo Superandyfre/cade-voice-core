@@ -1,0 +1,5 @@
+{"id": "asr_noise_001", "task": "order_listen", "input": "cook", "expected": {"type": "order", "items": [{"name": "coke", "qty": 1}]}, "tags": ["asr_noise", "coke"]}
+{"id": "asr_noise_002", "task": "order_listen", "input": "fried", "expected": {"type": "order", "items": [{"name": "fries", "qty": 1}]}, "tags": ["asr_noise", "fries"]}
+{"id": "asr_noise_003", "task": "order_listen", "input": "bugger", "expected": {"type": "order", "items": [{"name": "burger", "qty": 1}]}, "tags": ["asr_noise", "burger"]}
+{"id": "asr_noise_004", "task": "order_listen", "input": "tree waters", "expected": {"type": "order", "items": [{"name": "water", "qty": 3}]}, "tags": ["asr_noise", "quantity"]}
+{"id": "asr_noise_005", "task": "order_listen", "input": "coals", "expected": {"type": "order", "items": [{"name": "coke", "qty": 1}]}, "tags": ["asr_noise", "coke"]}
