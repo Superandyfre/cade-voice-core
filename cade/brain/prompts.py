@@ -192,18 +192,18 @@ ORDER_LISTEN_PROMPT_TEMPLATE = """You are an ordering parser for a restaurant se
 Output must start with { and end with }. No markdown, no prose, no explanation.
 
 Schema:
-{"type":"order","items":[{"name":"canonical_food_name","qty":1}]}
+{"type":"order","items":[{"name":"food_name","qty":1}]}
 
 Rules:
 - type must always be "order".
 - qty must be an integer >= 1. If quantity is missing, set qty to 1.
-- name must be one of the canonical food names listed below.
-- Normalize food names to canonical names when possible.
+- Extract any food or drink item the user mentions. Do NOT reject items that are not on the menu.
+- If the item matches a canonical food name listed below, normalize to that name.
+- If the item does NOT match any canonical name, use the item name as spoken by the user (lowercase, underscores for spaces).
 - If nothing can be recognized as order items, return empty items.
 
 Off-domain input rules:
 - Irrelevant chat, noise, unclear speech, non-ordering intent -> return empty items.
-- Food not on the menu -> ignore. If no menu items recognized -> empty items.
 - Filler words like "uh", "please", "maybe" are not food items.
 
 Examples:
@@ -212,6 +212,12 @@ Output: {"type":"order","items":[{"name":"coke","qty":1}]}
 
 User: "two burgers and a water"
 Output: {"type":"order","items":[{"name":"burger","qty":2},{"name":"water","qty":1}]}
+
+User: "I'd like a lemonade"
+Output: {"type":"order","items":[{"name":"lemonade","qty":1}]}
+
+User: "one spaghetti bolognese and a tiramisu"
+Output: {"type":"order","items":[{"name":"spaghetti_bolognese","qty":1},{"name":"tiramisu","qty":1}]}
 
 User: "uh can you hear me"
 Output: {"type":"order","items":[]}
@@ -222,7 +228,7 @@ Output: {"type":"order","items":[]}
 User: "I maybe want cola and two bottle water"
 Output: {"type":"order","items":[{"name":"coke","qty":1},{"name":"water","qty":2}]}
 
-Canonical food names:
+Canonical food names (for normalization only, NOT a restriction):
 {canonical_foods}
 """
 
@@ -254,14 +260,15 @@ ORDER_CHECK_PROMPT_TEMPLATE = """You are an order-confirmation judge.
 Output must start with { and end with }. No markdown, no prose, no explanation.
 
 Schema:
-{"result":"correct"|"wrong","action":{"type":"fix_order","items":[{"name":"canonical_food_name","qty":1}]}|null,"reply":"..."|null}
+{"result":"correct"|"wrong","action":{"type":"fix_order","items":[{"name":"food_name","qty":1}]}|null,"reply":"..."|null}
 
 Rules:
 - result must be "correct" or "wrong".
 - If user confirms the order, set result to "correct" and action to null.
 - If user rejects and provides a revised order, set result to "wrong" and action to a fix_order with the new items.
 - If user rejects without a clear revised order, set result to "wrong", action to null, and put a short clarification question in reply.
-- Use canonical food names when possible.
+- Extract any food or drink item the user mentions. Do NOT reject items that are not on the menu.
+- If the item matches a canonical food name, normalize to that name. Otherwise use the name as spoken.
 - Do NOT add extra fields.
 
 Examples:
@@ -285,7 +292,11 @@ Current order: {"type":"order","items":[{"name":"coke","qty":1}]}
 Customer: "not sure"
 Output: {"result":"wrong","action":null,"reply":"Would you like to change anything?"}
 
-Canonical food names:
+Current order: {"type":"order","items":[{"name":"lemonade","qty":1}]}
+Customer: "yes that's right"
+Output: {"result":"correct","action":null,"reply":null}
+
+Canonical food names (for normalization only):
 {canonical_foods}
 """
 

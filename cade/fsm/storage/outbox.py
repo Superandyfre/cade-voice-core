@@ -43,7 +43,7 @@ class OutboxManager:
         return transitioned
 
     def find_undelivered(self) -> List[dict]:
-        """Find all pending or published outbox entries across all orders."""
+        """Find all pending or published outbox entries across all orders (latest per order_id)."""
         undelivered = []
         if not hasattr(self._storage, "list_session_snapshots"):
             return undelivered
@@ -52,7 +52,12 @@ class OutboxManager:
                 order_dir = entry.get("order_dir")
                 if not order_dir:
                     continue
+                latest_by_order: Dict[str, dict] = {}
                 for ob_entry in self.load_outbox(order_dir):
+                    oid = ob_entry.get("order_id", "")
+                    if oid:
+                        latest_by_order[oid] = ob_entry
+                for oid, ob_entry in latest_by_order.items():
                     if ob_entry.get("status") in (OutboxStatus.pending.value, OutboxStatus.published.value):
                         ob_entry["order_dir"] = order_dir
                         undelivered.append(ob_entry)
@@ -61,7 +66,7 @@ class OutboxManager:
         return undelivered
 
     def find_retryable(self, retry_sec: float, max_attempts: int) -> List[dict]:
-        """Find pending/published entries eligible for retry."""
+        """Find pending/published entries eligible for retry (latest entry per order_id only)."""
         now = time.time()
         retryable = []
         if not hasattr(self._storage, "list_session_snapshots"):
@@ -71,7 +76,12 @@ class OutboxManager:
                 order_dir = entry.get("order_dir")
                 if not order_dir:
                     continue
+                latest_by_order: Dict[str, dict] = {}
                 for ob_entry in self.load_outbox(order_dir):
+                    oid = ob_entry.get("order_id", "")
+                    if oid:
+                        latest_by_order[oid] = ob_entry
+                for oid, ob_entry in latest_by_order.items():
                     if ob_entry.get("status") not in (OutboxStatus.pending.value, OutboxStatus.published.value):
                         continue
                     attempts = int(ob_entry.get("attempt_count", 0))

@@ -62,8 +62,12 @@ _NUMBER_WORDS = {
     "one": 1, "a": 1, "an": 1,
     "two": 2, "three": 3, "four": 4, "five": 5,
     "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
+    "eleven": 11, "twelve": 12, "thirteen": 13, "fourteen": 14, "fifteen": 15,
+    "sixteen": 16, "seventeen": 17, "eighteen": 18, "nineteen": 19, "twenty": 20,
     "1": 1, "2": 2, "3": 3, "4": 4, "5": 5,
     "6": 6, "7": 7, "8": 8, "9": 9, "10": 10,
+    "11": 11, "12": 12, "13": 13, "14": 14, "15": 15,
+    "16": 16, "17": 17, "18": 18, "19": 19, "20": 20,
 }
 
 # Filler phrases to strip before evaluation
@@ -77,6 +81,24 @@ _FILLERS = {
 # Confirmation words
 _CORRECT_WORDS = {"yes", "yeah", "yep", "correct", "right", "sure", "ok", "okay", "that's right", "that is right"}
 _WRONG_WORDS = {"no", "nope", "wrong", "not correct", "that's wrong"}
+
+_NO_CHANGE_PHRASES = [
+    "no change", "nothing changed", "nothing to change",
+    "nothing needs to change", "nothing need to change",
+    "no changes", "doesn't need to change", "don't need to change",
+    "don't change anything", "no need to change", "nothing to be changed",
+    "nothing has changed", "nothing is changed",
+]
+
+_POSITIVE_CONFIRM_PHRASES = [
+    "that's right", "that is right", "that's correct", "that is correct",
+    "looks good", "looks fine", "looks great", "sounds good", "sounds right",
+    "that's fine", "that is fine", "that's perfect", "keep it", "leave it",
+    "that's all", "everything is fine", "everything is good", "it's good",
+    "it's fine", "it's correct", "order is correct", "order is fine",
+    "order is good", "that's good", "that is good", "all good",
+    "no problem", "go ahead", "looks correct", "sounds correct",
+]
 
 
 class DeterministicOrderParser:
@@ -104,15 +126,18 @@ class DeterministicOrderParser:
         used_aliases: Dict[str, str] = {}
         remaining = text_lower
 
+        # Intermediate measure words: "two cups of coke", "three glasses of water"
+        _MEASURE_WORDS = r"(?:\s+(?:cup|cups|glass|glasses|bottle|bottles|piece|pieces|plate|plates|bowl|bowls|slice|slices|serving|servings|portion|portions|order|orders)\s+of)?"
+
         # Try to match food items with quantities
-        # Pattern: [number] [food_name] [and|plus|comma] [number] [food_name] ...
+        # Pattern: [number] [measure?] [food_name] [and|plus|comma] [number] [measure?] [food_name] ...
         # First pass: try explicit number + food patterns
         for canonical in menu.candidates:
             all_names = [canonical.canonical] + [a.replace(" ", "_") for a in canonical.aliases]
 
             for name in sorted(all_names, key=len, reverse=True):
-                # Pattern: number + name
-                pattern = rf'(?:^|\s)(\d+|one|two|three|four|five|six|seven|eight|nine|ten|a|an)\s+{re.escape(name)}s?(?:\s|$|,)'
+                # Pattern: number + [measure] + name
+                pattern = rf'(?:^|\s)(\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|a|an){_MEASURE_WORDS}\s+{re.escape(name)}s?(?:\s|$|,)'
                 matches = list(re.finditer(pattern, remaining))
                 for m in matches:
                     qty_str = m.group(1)
@@ -170,7 +195,7 @@ _MODIFICATION_SIGNALS = {
 class ConfirmationParser:
     """Rule-based confirmation parser with modification-priority logic.
 
-    Priority: cancel > repeat_request > modification_signal > negation > positive > unknown.
+    Priority: cancel > repeat_request > no_change_confirm > modification_signal > negation > positive > unknown.
     Modification signals override positive words: "yes but add fries" is NOT correct.
     """
 
@@ -191,7 +216,12 @@ class ConfirmationParser:
             if text_lower == phrase or text_lower.startswith(phrase):
                 return ConfirmationParseResult(result="repeat_request", confidence=0.9)
 
-        # 3. Modification signals (even with yes/ok prefix) — highest priority after cancel
+        # 3. "No change" / "nothing changed" → confirmation (before modification signal check)
+        for phrase in _NO_CHANGE_PHRASES:
+            if phrase in text_lower:
+                return ConfirmationParseResult(result="correct", confidence=0.92)
+
+        # 4. Modification signals (even with yes/ok prefix) — highest priority after cancel
         if self._has_modification_signal(text_lower):
             fix = self._extract_modification(text_lower, menu)
             if fix:
@@ -239,15 +269,23 @@ class ConfirmationParser:
                 reply="What would you like instead?",
             )
 
-        # 5. Explicit positive (yes / correct / right / sure / ok)
+        # 5. Explicit positive (yes / correct / right / sure / ok / extended phrases)
         for word in _CORRECT_WORDS:
             if text_lower == word or text_lower.startswith(word):
                 return ConfirmationParseResult(result="correct", confidence=0.99)
+
+        for phrase in _POSITIVE_CONFIRM_PHRASES:
+            if text_lower == phrase or text_lower.startswith(phrase + " ") or text_lower.startswith(phrase):
+                return ConfirmationParseResult(result="correct", confidence=0.95)
 
         # 6. Unknown
         return ConfirmationParseResult(result="unknown", confidence=0.3, reply="Could you please confirm?")
 
     def _has_modification_signal(self, text: str) -> bool:
+        # Negated modification signals are NOT modifications
+        for neg in _NO_CHANGE_PHRASES:
+            if neg in text:
+                return False
         for signal in _MODIFICATION_SIGNALS:
             if f" {signal} " in f" {text} " or text.endswith(f" {signal}"):
                 return True

@@ -11,13 +11,10 @@ from typing import Dict, List, Optional
 
 
 def _order_item_schema(canonical_names: Optional[List[str]] = None) -> dict:
-    name_schema: dict = {"type": "string", "minLength": 1}
-    if canonical_names:
-        name_schema = {"type": "string", "enum": canonical_names}
     return {
         "type": "object",
         "properties": {
-            "name": name_schema,
+            "name": {"type": "string", "minLength": 1},
             "qty": {"type": "integer", "minimum": 1},
         },
         "required": ["name", "qty"],
@@ -28,10 +25,7 @@ def _order_item_schema(canonical_names: Optional[List[str]] = None) -> dict:
 def build_listen_response_format(
     food_aliases: Optional[Dict[str, List[str]]] = None,
 ) -> dict:
-    canonical = sorted(
-        {str(k).strip().lower() for k in (food_aliases or {}).keys() if str(k).strip()}
-    )
-    item_schema = _order_item_schema(canonical or None)
+    item_schema = _order_item_schema()
 
     schema = {
         "type": "object",
@@ -84,10 +78,7 @@ def build_repeat_response_format() -> dict:
 def build_check_response_format(
     food_aliases: Optional[Dict[str, List[str]]] = None,
 ) -> dict:
-    canonical = sorted(
-        {str(k).strip().lower() for k in (food_aliases or {}).keys() if str(k).strip()}
-    )
-    item_schema = _order_item_schema(canonical or None)
+    item_schema = _order_item_schema()
 
     fix_order_schema = {
         "type": "object",

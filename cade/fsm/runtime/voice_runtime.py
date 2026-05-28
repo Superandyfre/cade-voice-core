@@ -345,6 +345,8 @@ def resolve_asr_input(sd: Any, selector: str) -> Dict[str, Any]:
             if default_source in sources:
                 return {"kind": "pulse", "source": default_source, "rate": 48000}
         for source in sources:
+            if source.endswith(".monitor"):
+                continue
             source_lower = source.lower()
             if target_lower == source_lower or target_lower in source_lower:
                 return {"kind": "pulse", "source": source, "rate": 48000}

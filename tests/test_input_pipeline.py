@@ -55,10 +55,10 @@ class TestPipelineListen:
         event = pipeline.process_listen("hello", source="asr")
         assert event.event_type == "smalltalk"
 
-    def test_unknown_food_returns_out_of_menu(self):
+    def test_unknown_food_returns_valid_order_for_llm(self):
         pipeline = _make_pipeline()
         event = pipeline.process_listen("i want a pizza", source="asr")
-        assert event.event_type == "out_of_menu_item"
+        assert event.event_type == "valid_order"
         assert event.out_of_menu_item == "pizza"
 
     def test_multi_item_order(self):
@@ -106,6 +106,40 @@ class TestPipelineCheck:
         pipeline = _make_pipeline()
         event = pipeline.process_check("uh", source="asr")
         assert event.event_type == "empty_or_noise"
+
+
+class TestPipelineCheckNoChangePatterns:
+    """Tests for 'no change' / 'nothing changed' confirmation patterns."""
+
+    def test_nothing_changed_is_not_cancel(self):
+        pipeline = _make_pipeline()
+        event = pipeline.process_check("nothing changed", source="asr")
+        assert event.event_type != "cancel_request"
+
+    def test_nothing_to_change_is_correct(self):
+        pipeline = _make_pipeline()
+        event = pipeline.process_check("nothing to change", source="asr")
+        assert event.confirm_result == "correct"
+
+    def test_thats_right_no_change_is_correct(self):
+        pipeline = _make_pipeline()
+        event = pipeline.process_check("that's right, there's no change need to make", source="asr")
+        assert event.confirm_result == "correct"
+
+    def test_looks_good_is_correct(self):
+        pipeline = _make_pipeline()
+        event = pipeline.process_check("looks good", source="asr")
+        assert event.confirm_result == "correct"
+
+    def test_nothing_still_cancels_in_listen(self):
+        pipeline = _make_pipeline()
+        event = pipeline.process_listen("nothing", source="asr")
+        assert event.event_type == "cancel_request"
+
+    def test_nothing_else_is_not_cancel(self):
+        pipeline = _make_pipeline()
+        event = pipeline.process_listen("nothing else", source="asr")
+        assert event.event_type != "cancel_request"
 
 
 class TestSemanticEventFields:

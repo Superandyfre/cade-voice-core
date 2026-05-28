@@ -14,7 +14,14 @@ from cade.fsm.parsing.order_parser import ClassifiedInput, OrderInputKind
 
 _CANCEL_PHRASES: List[str] = [
     "cancel", "never mind", "forget it", "stop",
-    "no thanks", "nothing", "not anymore", "abort",
+    "no thanks", "not anymore", "abort",
+]
+
+_CANCEL_EXCLUSIONS: List[str] = [
+    "nothing changed", "nothing to change", "nothing needs to change",
+    "nothing need to change", "nothing to add", "nothing else",
+    "nothing else to add", "nothing more", "nothing else to change",
+    "nothing has changed", "nothing is changed", "nothing will change",
 ]
 
 _REPEAT_REQUEST_PHRASES: List[str] = [
@@ -121,13 +128,29 @@ class OrderInputClassifier:
             )
 
         # 1. Cancel
-        for phrase in _CANCEL_PHRASES:
-            if norm == phrase or norm.startswith(phrase + " ") or norm.startswith(phrase):
+        # "nothing" alone is cancel, but "nothing changed/nothing to change" is NOT
+        cancel_excluded = False
+        for ex in _CANCEL_EXCLUSIONS:
+            if norm == ex or norm.startswith(ex + " ") or norm.startswith(ex):
+                cancel_excluded = True
+                break
+
+        if not cancel_excluded:
+            for phrase in _CANCEL_PHRASES:
+                if norm == phrase or norm.startswith(phrase + " ") or norm.startswith(phrase):
+                    return ClassifiedInput(
+                        kind=OrderInputKind.CANCEL_REQUEST,
+                        confidence=0.95,
+                        normalized_text=norm,
+                        reason=f"match:{phrase}",
+                    )
+            # "nothing" standalone is cancel
+            if norm == "nothing" or norm.startswith("nothing.") or norm.startswith("nothing!"):
                 return ClassifiedInput(
                     kind=OrderInputKind.CANCEL_REQUEST,
                     confidence=0.95,
                     normalized_text=norm,
-                    reason=f"match:{phrase}",
+                    reason="match:nothing",
                 )
 
         # 2. Repeat request
@@ -219,12 +242,12 @@ class OrderInputClassifier:
                 reason="noise_or_too_short",
             )
 
-        # 12. Out of menu item — text looks like a food request but no known food
+        # 12. Text looks like a food request but no known food match — delegate to LLM
         if self._looks_like_food_request(norm):
             out_item = self._extract_unknown_food(norm)
             return ClassifiedInput(
-                kind=OrderInputKind.OUT_OF_MENU_ITEM,
-                confidence=0.7,
+                kind=OrderInputKind.VALID_ORDER,
+                confidence=0.5,
                 normalized_text=norm,
                 reason="no_known_food_match",
                 out_of_menu_item=out_item,

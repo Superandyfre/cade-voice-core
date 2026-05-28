@@ -150,6 +150,63 @@ class TestConfirmationParser:
         result = confirm_parser.parse("right", full_menu)
         assert result.result == "correct"
 
+    # --- "no change" / "nothing changed" confirmation patterns ---
+
+    def test_no_change_is_correct(self, confirm_parser, full_menu):
+        result = confirm_parser.parse("no change", full_menu)
+        assert result.result == "correct"
+        assert result.confidence >= 0.9
+
+    def test_nothing_changed_is_correct(self, confirm_parser, full_menu):
+        result = confirm_parser.parse("nothing changed", full_menu)
+        assert result.result == "correct"
+        assert result.confidence >= 0.9
+
+    def test_nothing_to_change_is_correct(self, confirm_parser, full_menu):
+        result = confirm_parser.parse("nothing to change", full_menu)
+        assert result.result == "correct"
+
+    def test_thats_right_no_change_is_correct(self, confirm_parser, full_menu):
+        result = confirm_parser.parse("that's right, there's no change need to make", full_menu)
+        assert result.result == "correct"
+
+    def test_no_changes_is_correct(self, confirm_parser, full_menu):
+        result = confirm_parser.parse("no changes", full_menu)
+        assert result.result == "correct"
+
+    def test_no_need_to_change_is_correct(self, confirm_parser, full_menu):
+        result = confirm_parser.parse("no need to change", full_menu)
+        assert result.result == "correct"
+
+    # --- Extended positive phrases ---
+
+    def test_looks_good_is_correct(self, confirm_parser, full_menu):
+        result = confirm_parser.parse("looks good", full_menu)
+        assert result.result == "correct"
+
+    def test_thats_right_is_correct(self, confirm_parser, full_menu):
+        result = confirm_parser.parse("that's right", full_menu)
+        assert result.result == "correct"
+
+    def test_sounds_good_is_correct(self, confirm_parser, full_menu):
+        result = confirm_parser.parse("sounds good", full_menu)
+        assert result.result == "correct"
+
+    def test_all_good_is_correct(self, confirm_parser, full_menu):
+        result = confirm_parser.parse("all good", full_menu)
+        assert result.result == "correct"
+
+    # --- Modification signals still work ---
+
+    def test_change_fries_to_salad_is_wrong(self, confirm_parser, full_menu):
+        result = confirm_parser.parse("change the fries to salad", full_menu)
+        assert result.result == "wrong"
+        assert result.fix_order is not None
+
+    def test_add_fries_is_wrong(self, confirm_parser, full_menu):
+        result = confirm_parser.parse("add fries", full_menu)
+        assert result.result == "wrong"
+
 
 # ------------------------------------------------------------------
 # Menu context

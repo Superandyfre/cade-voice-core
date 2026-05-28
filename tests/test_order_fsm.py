@@ -489,7 +489,7 @@ class TestTTSFailure:
         fsm.handle_serving_state({"state": "PAUSED_ORDERING"})
         time.sleep(0.3)
 
-        assert fsm._state == OrderState.ASK
+        assert fsm._state == OrderState.LISTEN
         assert fsm.orders_confirmed == 0
         assert any(t == "tts.failed" for t, _ in topics)
         assert any(t == "order.error" for t, _ in topics)
@@ -527,7 +527,7 @@ class TestTTSCompletionGates:
         assert completed[0]["playback_duration_s"] == 1.2
         assert completed[0]["audio_duration_s"] == 0.8
 
-    def test_ask_does_not_enter_listen_until_tts_returns(self):
+    def test_ask_transitions_to_listen_before_tts_returns(self):
         release = threading.Event()
         started = threading.Event()
 
@@ -540,13 +540,13 @@ class TestTTSCompletionGates:
 
         assert started.wait(timeout=2)
         time.sleep(0.1)
-        assert fsm._state == OrderState.ASK
+        assert fsm._state == OrderState.LISTEN
 
         release.set()
         time.sleep(0.3)
         assert fsm._state == OrderState.LISTEN
 
-    def test_repeat_does_not_enter_check_until_tts_returns(self):
+    def test_repeat_transitions_to_check_before_tts_returns(self):
         llm = _make_mock_llm()
         llm.get_order_action.return_value = OrderAction(
             type="order", items=[OrderItem(name="coke", qty=1)]
@@ -566,7 +566,7 @@ class TestTTSCompletionGates:
 
         assert repeat_started.wait(timeout=2)
         time.sleep(0.1)
-        assert fsm._state == OrderState.REPEAT
+        assert fsm._state == OrderState.CHECK
 
         repeat_release.set()
         time.sleep(0.3)

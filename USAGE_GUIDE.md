@@ -147,7 +147,80 @@ cade-voice-chat
 cade-voice-chat   # 需在 .env 设置 CADE_MODE=LOCAL
 ```
 
-### 3.3 点餐服务（Headless ZMQ 模式）
+### 3.3 使用本地 LLM 测试（三终端启动）
+
+使用 llama-server 作为本地 OpenAI-compatible LLM 推理服务，无需云端 API 即可完成全链路测试。
+
+**前提条件**：已编译 llama.cpp 并准备好 GGUF 格式模型文件。
+
+#### 第一步：终端 1 — 启动本地 LLM 服务
+
+```bash
+# 启动 llama-server（OpenAI-compatible 接口）
+/home/pinggu/audio/llama.cpp/build/bin/llama-server \
+  -m /home/pinggu/audio/Qwen3.5-9B-UD-Q8_K_XL.gguf \
+  --host 127.0.0.1 --port 8080 -ngl 99 -c 4096
+```
+
+启动成功后会显示：
+```
+llama server listening at http://127.0.0.1:8080
+```
+
+> **参数说明**：
+> - `-m`：GGUF 模型文件路径，支持 Qwen、LLaMA、Mistral 等主流模型
+> - `-ngl 99`：全部层加载到 GPU（无 GPU 可改为 `-ngl 0` 纯 CPU 推理）
+> - `-c 4096`：上下文窗口长度，4096 足够点餐场景使用
+
+#### 第二步：终端 2 — 启动点餐 FSM 服务
+
+```bash
+# 使用本地模式启动 FSM（Headless，无音频设备）
+CADE_MODE=LOCAL cade-order-fsm
+```
+
+启动后显示：
+```
+CADE Ordering Sub-FSM (headless ZeroMQ)
+  LLM: Local (http://127.0.0.1:8080/v1)
+  PUB:  tcp://0.0.0.0:5555
+  ROUTER: tcp://0.0.0.0:5556
+```
+
+#### 第三步：终端 3 — 运行集成测试
+
+```bash
+# 自动走完完整点餐流程：健康检查 → 开启服务 → 点餐 → 确认 → 验证
+CADE_MODE=LOCAL cade-order-test
+```
+
+测试通过后输出：
+```
+✓ health check passed
+✓ snapshot received (state=NOT_PERMITTED)
+✓ serving_state update → PAUSED_ORDERING
+✓ state reached LISTEN
+✓ user text accepted → REPEAT
+✓ state reached CHECK
+✓ user text accepted → FINISH
+✓ order.confirmed received
+7/7 checks passed
+```
+
+#### 其他本地 LLM 启动方式
+
+```bash
+# 带真实麦克风 + 扬声器的语音点餐
+CADE_MODE=LOCAL cade-order-voice
+
+# 真实设备端到端测试（需要实际说话）
+CADE_MODE=LOCAL cade-order-e2e
+
+# 文本对话测试（不需要 FSM）
+CADE_MODE=LOCAL cade-text-chat
+```
+
+### 3.4 点餐服务（Headless ZMQ 模式）
 
 ```bash
 # 终端 1：启动点餐 FSM 服务（无音频，仅 ZMQ）
@@ -157,7 +230,7 @@ cade-order-fsm
 cade-order-test
 ```
 
-### 3.4 点餐服务（真实音频模式）
+### 3.5 点餐服务（真实音频模式）
 
 ```bash
 # 使用真实麦克风 + 扬声器
@@ -995,16 +1068,13 @@ cade-voice-core/
 
 ### Q: 如何使用本地 LLM？
 
-在 `.env` 中设置：
-```bash
-CADE_MODE=LOCAL
-CADE_LOCAL_BASE_URL=http://127.0.0.1:8080/v1
-```
+参考 [3.3 使用本地 LLM 测试](#33-使用本地-llm-测试三终端启动) 的三终端启动方式。简要步骤：
 
-然后启动本地 OpenAI-compatible 服务（如 llama-server、Ollama）：
-```bash
-llama-server -m model.gguf --host 127.0.0.1 --port 8080 -ngl 99 -c 4096
-```
+1. 终端 1：启动 llama-server
+2. 终端 2：`CADE_MODE=LOCAL cade-order-fsm`
+3. 终端 3：`CADE_MODE=LOCAL cade-order-test`
+
+也可以在 `.env` 中持久化设置 `CADE_MODE=LOCAL`，这样就不用每次在命令前加前缀。
 
 ### Q: 如何只测试点餐流程不接音频？
 

@@ -667,14 +667,13 @@ class OrderSubFSM:
             return
         if not self.transition("ask.begin", session_id=session_id, reason="ordering_started"):
             return
+        self.transition("ask.completed", session_id=session_id, reason="ask_completed")
+        if not self._can_session_continue(session_id):
+            return
         try:
             self._publish_tts(self.config.ask_prompt, profile="order_prompt")
         except TTSPlaybackError:
             self.order_failed_total += 1
-            return
-        if not self._can_session_continue(session_id):
-            return
-        self.transition("ask.completed", session_id=session_id, reason="ask_completed")
 
     def _process_order_input_async(self, raw: RawInput) -> None:
         try:
@@ -865,10 +864,13 @@ class OrderSubFSM:
                     speak_text = llm_text
             except Exception as exc:
                 logger.warning("Order REPEAT LLM failed, using deterministic template: %s", exc)
-        self._publish_tts(speak_text, profile="order_confirm")
+        self.transition("repeat.completed", session_id=session_id, reason="repeat_completed")
+        with self._fsm_lock:
+            if self._session_id == session_id:
+                self._processing_input = False
         if not self._can_session_continue(session_id):
             return
-        self.transition("repeat.completed", session_id=session_id, reason="repeat_completed")
+        self._publish_tts(speak_text, profile="order_confirm")
 
     def _process_check_stage(self, normalized: NormalizedInput) -> None:
         if not self._can_session_continue(normalized.raw.session_id):
@@ -1288,9 +1290,7 @@ class OrderSubFSM:
         for item in items:
             key = getattr(item, "item_id", None) or item.name
             menu_item = self._menu_items.get(key) or self._menu_items.get(item.name)
-            if menu_item is None:
-                return self.config.listen_retry_prompt
-            if menu_item and not menu_item.available:
+            if menu_item is not None and not menu_item.available:
                 return f"Sorry, {item.name.replace('_', ' ')} is sold out right now. {self._build_available_items_text()}"
             if item.qty > self.config.max_qty_per_item:
                 return "That's a bit too many. Could you order fewer?"

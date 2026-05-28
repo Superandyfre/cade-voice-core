@@ -217,8 +217,8 @@ class OrderFSMConfig(BaseModel):
     check_max_retries: int = Field(default_factory=lambda: int(os.getenv("CADE_ORDER_CHECK_MAX_RETRIES", "5")))
     empty_input_max: int = Field(default_factory=lambda: int(os.getenv("CADE_ORDER_EMPTY_INPUT_MAX", "3")))
 
-    max_qty_per_item: int = Field(default_factory=lambda: int(os.getenv("CADE_ORDER_MAX_QTY_PER_ITEM", "9")))
-    max_total_qty: int = Field(default_factory=lambda: int(os.getenv("CADE_ORDER_MAX_TOTAL_QTY", "20")))
+    max_qty_per_item: int = Field(default_factory=lambda: int(os.getenv("CADE_ORDER_MAX_QTY_PER_ITEM", "20")))
+    max_total_qty: int = Field(default_factory=lambda: int(os.getenv("CADE_ORDER_MAX_TOTAL_QTY", "99")))
     snapshot_file_name: str = Field(default_factory=lambda: os.getenv("CADE_ORDER_SESSION_SNAPSHOT_FILE", "session_snapshot.json"))
     repeat_use_llm: bool = Field(
         default_factory=lambda: os.getenv("CADE_ORDER_REPEAT_USE_LLM", "false").lower() in ("1", "true", "yes"),
